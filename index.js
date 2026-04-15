@@ -46,7 +46,9 @@ async function sendToTokens(tokens, title, body, data = {}) {
 
 // 1. Notify all admins (for new orders)
 app.post('/notify-admins', async (req, res) => {
-  const { title, body, data } = req.body;
+  let { title, body, data } = req.body;
+  // Ensure data has the target role if not custom set
+  data = { ...(data || {}), role: 'admin', type: 'NEW_ORDER' };
   try {
     const snap = await db.collection('users').where('role', '==', 'admin').get();
     const tokens = [];
@@ -92,9 +94,11 @@ app.post('/notify-user', async (req, res) => {
   // Custom Payload Injection
   const data = {
      type: "ORDER_UPDATE",
+     userId: String(userId), // 🔥 Critical for frontend target validation
      click_action: "FLUTTER_NOTIFICATION_CLICK"
   };
   if (orderId) data.orderId = String(orderId);
+
 
   try {
     const doc = await db.collection('users').doc(userId).get();
